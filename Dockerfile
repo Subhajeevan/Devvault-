@@ -1,9 +1,10 @@
 # DevVault — portable container (works on Hugging Face Spaces, Render, Fly, Railway, Koyeb, Cloud Run)
 FROM python:3.12-slim
 
-# System libs: libgomp1 is required by onnxruntime; ca-certificates for TLS.
+# System libs: libgomp1 for onnxruntime; libgl1 + libglib2.0-0 for OpenCV (OCR);
+# ca-certificates for TLS.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libgomp1 ca-certificates && \
+        libgomp1 libgl1 libglib2.0-0 ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 ENV HOME=/app \

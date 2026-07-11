@@ -16,5 +16,9 @@ youtube-transcript-api>=1.2,<2
 httpx>=0.27
 beautifulsoup4>=4.12
 
+# OCR fallback for scanned/image-only PDFs (no external binary — runs on onnxruntime)
+pymupdf>=1.24
+rapidocr-onnxruntime>=1.3
+
 # TLS trust via the OS store (fixes cert issues behind proxies / in some containers)
 truststore>=0.9

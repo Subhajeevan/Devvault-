@@ -42,6 +42,10 @@ class Settings:
     SUMMARY_CHARS: int = _int("DEVVAULT_SUMMARY_CHARS", 8_000)
     FLASHCARD_CHARS: int = _int("DEVVAULT_FLASHCARD_CHARS", 12_000)
 
+    # OCR fallback for scanned/image PDFs (bounded to keep memory/time in check).
+    MAX_OCR_PAGES: int = _int("DEVVAULT_MAX_OCR_PAGES", 15)
+    OCR_DPI: int = _int("DEVVAULT_OCR_DPI", 200)
+
     @property
     def CHROMA_DIR(self) -> str:
         return os.path.join(self.DATA_DIR, "chroma")
