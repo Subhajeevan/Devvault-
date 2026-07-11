@@ -46,6 +46,11 @@ class Settings:
     MAX_OCR_PAGES: int = _int("DEVVAULT_MAX_OCR_PAGES", 15)
     OCR_DPI: int = _int("DEVVAULT_OCR_DPI", 200)
 
+    # Seed sample sources on first boot so a fresh/ephemeral deploy isn't empty.
+    SEED_ON_START: bool = os.getenv("DEVVAULT_SEED", "true").strip().lower() not in (
+        "0", "false", "no", "off",
+    )
+
     @property
     def CHROMA_DIR(self) -> str:
         return os.path.join(self.DATA_DIR, "chroma")

@@ -9,7 +9,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import db, ingest, llm, vectorstore
+from . import db, ingest, llm, seed, vectorstore
 from .chunking import chunk_text
 from .config import settings
 from .models import AskIn, FlashcardsIn, NoteIn, UrlIn
@@ -20,6 +20,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
+    seed.seed_if_empty_async()  # populate a fresh/empty vault in the background
     yield
 
 
