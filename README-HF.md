@@ -11,8 +11,8 @@ short_description: A developer's AI second brain — grounded, cited RAG over yo
 
 # DevVault
 
-A developer's AI second brain: ingest PDFs, YouTube transcripts, web pages, and
-notes, then ask questions and get answers grounded in your own material — with
+A developer's AI second brain: ingest PDFs (text and scanned, via OCR), web pages,
+and notes, then ask questions and get answers grounded in your own material — with
 citations. Built with FastAPI, ChromaDB (local embeddings), and Groq/Claude.
 
 > **This file is the Hugging Face Space config.** When you create the Space,

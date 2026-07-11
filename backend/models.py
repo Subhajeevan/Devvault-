@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class UrlIn(BaseModel):
-    url: str = Field(..., description="A YouTube or website URL to ingest.")
+    url: str = Field(..., description="A website URL to ingest.")
 
 
 class NoteIn(BaseModel):

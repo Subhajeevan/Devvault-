@@ -292,7 +292,6 @@ function wireForms() {
       });
     };
   };
-  urlForm("#form-youtube", "#yt-url", "/api/ingest/youtube");
   urlForm("#form-web", "#web-url", "/api/ingest/web");
 
   $("#form-note").onsubmit = (e) => {

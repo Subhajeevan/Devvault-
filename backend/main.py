@@ -119,15 +119,6 @@ async def ingest_pdf(file: UploadFile = File(...)) -> dict:
     return _ingest(title, "pdf", None, text)
 
 
-@app.post("/api/ingest/youtube")
-def ingest_youtube(body: UrlIn) -> dict:
-    try:
-        title, text = ingest.load_youtube(body.url)
-    except Exception as exc:
-        raise HTTPException(400, f"Failed to load YouTube transcript: {exc}")
-    return _ingest(title, "youtube", body.url, text)
-
-
 @app.post("/api/ingest/web")
 def ingest_web(body: UrlIn) -> dict:
     try:

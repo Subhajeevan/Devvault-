@@ -2,7 +2,7 @@
 
 # 🧠 DevVault
 
-### A developer's AI second brain — ingest your docs, talks, and notes, then ask questions and get answers **grounded in your own sources, with citations.**
+### A developer's AI second brain — ingest your docs, web pages, and notes, then ask questions and get answers **grounded in your own sources, with citations.**
 
 [![Live Demo](https://img.shields.io/badge/🔗_Live_Demo-online-35e0a1?style=flat-square)](https://devvault-cpf6.onrender.com)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
@@ -38,7 +38,7 @@ apps — **RAG, vector databases, and LLM orchestration.**
 
 | | Feature | How |
 |---|---|---|
-| 📥 | **Ingest anything** | PDFs, YouTube transcripts, web pages, and freeform notes |
+| 📥 | **Ingest anything** | PDFs (text **and scanned**, via OCR), web pages, and freeform notes |
 | 🔎 | **Ask your vault** | Semantic retrieval + an LLM, answered **only** from your sources |
 | 🔗 | **Real citations** | Answers link back to the exact source text they used |
 | 📝 | **Auto summaries** | Every source gets a TL;DR + key bullets on ingest |
@@ -63,7 +63,7 @@ apps — **RAG, vector databases, and LLM orchestration.**
                     └──────────────────────────────┬──────────────────────────────┘
                                                     │ REST /api/*
 ┌──────────────────────────────── FastAPI (backend/) ┴──────────────────────────────┐
-│  ingest.py      loaders: pypdf · youtube-transcript-api · httpx + BeautifulSoup    │
+│  ingest.py      loaders: pypdf (+ RapidOCR for scans) · httpx + BeautifulSoup      │
 │  chunking.py    boundary-aware overlapping chunks                                   │
 │  vectorstore.py ChromaDB (persistent, local MiniLM embeddings) ── semantic search  │
 │  db.py          SQLite registry: titles, summaries, tags, full text                │
@@ -79,7 +79,7 @@ apps — **RAG, vector databases, and LLM orchestration.**
 ## 🧰 Tech stack
 
 **Backend** Python · FastAPI · Uvicorn  **·  Retrieval** ChromaDB · all-MiniLM-L6-v2 (ONNX, local)
-**·  LLM** Groq (Llama 3.3 70B) / Anthropic Claude  **·  Ingestion** pypdf · BeautifulSoup · youtube-transcript-api
+**·  LLM** Groq (Llama 3.3 70B) / Anthropic Claude  **·  Ingestion** pypdf · RapidOCR (scanned PDFs) · BeautifulSoup
 **·  Storage** SQLite  **·  Frontend** vanilla HTML/CSS/JS (no build step)  **·  Deploy** Docker
 
 ## 🚀 Quickstart
@@ -116,7 +116,7 @@ docker build -t devvault . && docker run -p 7860:7860 -e GROQ_API_KEY=gsk_… de
 | --- | --- | --- |
 | `GET`  | `/api/health` | status, provider, model, source count |
 | `GET` / `DELETE` | `/api/sources[/{id}]` | list / detail / remove sources |
-| `POST` | `/api/ingest/{pdf,youtube,web,note}` | add a source |
+| `POST` | `/api/ingest/{pdf,web,note}` | add a source |
 | `POST` | `/api/ask` | `{question, source_ids?}` → answer + citations |
 | `POST` | `/api/sources/{id}/flashcards` | generate flashcards |
 
