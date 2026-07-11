@@ -49,9 +49,8 @@ apps — **RAG, vector databases, and LLM orchestration.**
 
 ## 🖼️ Demo
 
-<!-- 📸 Replace the placeholder below with a real screenshot: save it as docs/screenshot.png -->
 <p align="center">
-  <img src="https://placehold.co/900x520/0a0b0f/35e0a1?text=DevVault+UI+%E2%80%94+add+docs/screenshot.png" alt="DevVault UI preview" width="820">
+  <img src="docs/screenshot.png" alt="DevVault UI — add sources, ask, get cited answers" width="880">
 </p>
 
 <div align="center"><sub>A glassmorphism dark UI: add sources on the left, ask on the right, get cited answers and flashcards.</sub></div>
