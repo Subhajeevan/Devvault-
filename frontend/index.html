@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevVault — your developer second brain</title>
+  <link rel="stylesheet" href="/styles.css?v=2" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">&#9673;</span>
+      <div>
+        <h1>Dev<span>Vault</span></h1>
+        <p class="tagline">A developer's AI second brain — grounded, cited, yours.</p>
+      </div>
+    </div>
+    <div class="status" id="status">
+      <span class="dot"></span><span id="status-text">connecting…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <section class="card">
+        <h2 class="card-title">Add to vault</h2>
+        <div class="tabs" id="add-tabs">
+          <button class="tab active" data-tab="pdf">PDF</button>
+          <button class="tab" data-tab="youtube">YouTube</button>
+          <button class="tab" data-tab="web">Website</button>
+          <button class="tab" data-tab="note">Note</button>
+        </div>
+
+        <form class="add-form active" data-form="pdf" id="form-pdf">
+          <label class="filedrop" id="filedrop">
+            <input type="file" id="pdf-file" accept="application/pdf" hidden />
+            <span id="filedrop-label">Drop a PDF here or click to browse</span>
+          </label>
+          <button class="btn primary" type="submit">Ingest PDF</button>
+        </form>
+
+        <form class="add-form" data-form="youtube" id="form-youtube">
+          <input type="url" id="yt-url" placeholder="https://youtube.com/watch?v=…" />
+          <button class="btn primary" type="submit">Ingest transcript</button>
+        </form>
+
+        <form class="add-form" data-form="web" id="form-web">
+          <input type="url" id="web-url" placeholder="https://a-blog-post.dev/…" />
+          <button class="btn primary" type="submit">Ingest page</button>
+        </form>
+
+        <form class="add-form" data-form="note" id="form-note">
+          <input type="text" id="note-title" placeholder="Note title" />
+          <textarea id="note-text" rows="4" placeholder="Paste text, snippets, ideas…"></textarea>
+          <button class="btn primary" type="submit">Save note</button>
+        </form>
+      </section>
+
+      <section class="card grow">
+        <div class="card-head">
+          <h2 class="card-title">Your vault</h2>
+          <span class="pill" id="source-count">0</span>
+        </div>
+        <div id="sources" class="sources"></div>
+      </section>
+    </aside>
+
+    <!-- Main -->
+    <section class="content">
+      <div class="card ask-card">
+        <div class="scope" id="scope">
+          <span class="scope-label">Searching:</span>
+          <span class="scope-value" id="scope-value">all sources</span>
+          <button class="scope-clear" id="scope-clear" hidden>&times; clear</button>
+        </div>
+        <textarea id="question" rows="3"
+          placeholder="Ask your vault anything — e.g. “How did we handle idempotent retries?”"></textarea>
+        <div class="ask-row">
+          <span class="hint">Answers are grounded in your sources, with citations.</span>
+          <button class="btn primary" id="ask-btn">Ask&nbsp;&rarr;</button>
+        </div>
+      </div>
+
+      <div id="answer" class="answer" hidden></div>
+
+      <div id="detail" class="card detail" hidden></div>
+
+      <div id="empty" class="empty">
+        <div class="empty-mark">&#9673;</div>
+        <h3>Your vault is quiet</h3>
+        <p>Add a PDF, YouTube video, blog post, or note on the left. Then ask
+           questions and get answers grounded in your own material.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>
