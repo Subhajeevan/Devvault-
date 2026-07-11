@@ -1,140 +1,123 @@
-# DevVault — a developer's AI second brain
+<div align="center">
 
-Ingest the docs, blog posts, YouTube talks, and notes you actually learn from,
-then **ask questions and get answers grounded in your own material — with real
-citations back to the source.** Built on Retrieval-Augmented Generation (RAG),
-a local vector database, and Claude.
+# 🧠 DevVault
 
-> This is the portfolio-grade version of "AI second brain": narrowed to the
-> developer use case, with **grounded citations**, **local-first embeddings**,
-> and a clean, dependency-light stack that shows off exactly the skills the
-> trend is about — RAG, vector DBs, and LLM orchestration.
+### A developer's AI second brain — ingest your docs, talks, and notes, then ask questions and get answers **grounded in your own sources, with citations.**
 
----
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![ChromaDB](https://img.shields.io/badge/ChromaDB-vector%20search-FF6B6B?style=flat-square)](https://www.trychroma.com/)
+[![Groq](https://img.shields.io/badge/Groq-⚡%20LLM-F55036?style=flat-square)](https://groq.com/)
+[![Claude](https://img.shields.io/badge/Claude-Citations%20API-D97757?style=flat-square)](https://www.anthropic.com/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white)](Dockerfile)
+[![License: MIT](https://img.shields.io/badge/License-MIT-3fb950?style=flat-square)](LICENSE)
 
-## ✨ What it does
+**Retrieval-Augmented Generation · Local vector DB · Grounded citations · Zero-cost to run**
 
-| Feature | How |
-| --- | --- |
-| **Save anything** | PDFs, YouTube transcripts, web pages, and freeform notes |
-| **Ask your vault** | Semantic retrieval + Claude, answered **only** from your sources |
-| **Real citations** | Uses the Anthropic Citations API — every answer links to the exact source text it used |
-| **Auto summaries** | Each source gets a TL;DR + key bullets on ingest |
-| **Auto-organize** | Each source is auto-tagged so your vault stays browsable |
-| **Flashcards** | Turn any source into Q&A flashcards for active recall |
-| **Scoped search** | Ask across everything, or narrow to a single source |
+[Features](#-features) · [Demo](#️-demo) · [Architecture](#️-architecture) · [Quickstart](#-quickstart) · [Deploy](DEPLOY.md)
 
-**Local-first:** embeddings run on your machine (Chroma's bundled MiniLM model),
-so ingestion and semantic search need **no API key**. Only the Claude-powered
-features (Q&A, summaries, flashcards) use `ANTHROPIC_API_KEY`.
+</div>
 
 ---
+
+## Why DevVault
+
+"Chat with your PDFs" apps are everywhere and mostly the same. **DevVault** narrows the
+idea to the developer workflow and does the hard parts well: every answer is **grounded
+strictly in your own material and traceable to the exact source text**, embeddings run
+**locally** (so search is free and private), and the LLM backend is **swappable** between
+free Groq and Claude. It's a compact, end-to-end showcase of the skills behind modern AI
+apps — **RAG, vector databases, and LLM orchestration.**
+
+## ✨ Features
+
+| | Feature | How |
+|---|---|---|
+| 📥 | **Ingest anything** | PDFs, YouTube transcripts, web pages, and freeform notes |
+| 🔎 | **Ask your vault** | Semantic retrieval + an LLM, answered **only** from your sources |
+| 🔗 | **Real citations** | Answers link back to the exact source text they used |
+| 📝 | **Auto summaries** | Every source gets a TL;DR + key bullets on ingest |
+| 🏷️ | **Auto-organize** | Sources are auto-tagged so the vault stays browsable |
+| 🎴 | **Flashcards** | Turn any source into Q&A cards for active recall |
+| 🎯 | **Scoped search** | Query everything, or narrow to a single source |
+| 🆓 | **Local-first & free** | Embeddings run on-device; Groq powers the LLM at no cost |
+
+## 🖼️ Demo
+
+<!-- 📸 Replace the placeholder below with a real screenshot: save it as docs/screenshot.png -->
+<p align="center">
+  <img src="https://placehold.co/900x520/0a0b0f/35e0a1?text=DevVault+UI+%E2%80%94+add+docs/screenshot.png" alt="DevVault UI preview" width="820">
+</p>
+
+<div align="center"><sub>A glassmorphism dark UI: add sources on the left, ask on the right, get cited answers and flashcards.</sub></div>
 
 ## 🏗️ Architecture
 
 ```
-                        ┌────────────────── Frontend (vanilla JS SPA) ──────────────────┐
-                        │  add sources · browse vault · ask · citations · flashcards     │
-                        └───────────────────────────────┬───────────────────────────────┘
-                                                         │ REST /api/*
-┌──────────────────────────────── FastAPI (backend/) ───┴───────────────────────────────┐
-│  ingest.py     loaders: pypdf · youtube-transcript-api · httpx+BeautifulSoup           │
-│  chunking.py   boundary-aware overlapping chunks                                        │
-│  vectorstore.py  ChromaDB (persistent, local MiniLM embeddings)  ── semantic search    │
-│  db.py         SQLite registry: titles, summaries, tags, full text                     │
-│  llm.py        Claude: grounded Q&A w/ Citations API · summaries · tags · flashcards    │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+                    ┌───────────────── Frontend (vanilla JS SPA) ─────────────────┐
+                    │  add sources · browse vault · ask · citations · flashcards   │
+                    └──────────────────────────────┬──────────────────────────────┘
+                                                    │ REST /api/*
+┌──────────────────────────────── FastAPI (backend/) ┴──────────────────────────────┐
+│  ingest.py      loaders: pypdf · youtube-transcript-api · httpx + BeautifulSoup    │
+│  chunking.py    boundary-aware overlapping chunks                                   │
+│  vectorstore.py ChromaDB (persistent, local MiniLM embeddings) ── semantic search  │
+│  db.py          SQLite registry: titles, summaries, tags, full text                │
+│  llm.py         pluggable provider → Groq (free) or Claude (native citations)      │
+└────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Retrieval → generation flow for a question:**
+**Retrieval → generation flow:**
 1. Embed the question locally and pull the top-K chunks from ChromaDB.
-2. Pass each chunk to Claude as a `document` content block with citations enabled.
-3. Claude answers strictly from those documents; the response carries citation
-   spans that map back to the exact source and text.
+2. Pass those chunks to the LLM as grounding context with citations enabled.
+3. The model answers strictly from them; citations map each claim back to its source.
 
-Tech: **Python · FastAPI · ChromaDB · Anthropic Claude (`claude-opus-4-8`) ·
-pypdf · BeautifulSoup**. No build step on the frontend.
+## 🧰 Tech stack
 
----
+**Backend** Python · FastAPI · Uvicorn  **·  Retrieval** ChromaDB · all-MiniLM-L6-v2 (ONNX, local)
+**·  LLM** Groq (Llama 3.3 70B) / Anthropic Claude  **·  Ingestion** pypdf · BeautifulSoup · youtube-transcript-api
+**·  Storage** SQLite  **·  Frontend** vanilla HTML/CSS/JS (no build step)  **·  Deploy** Docker
 
 ## 🚀 Quickstart
 
 ```bash
-# 1. (recommended) create a virtualenv
-python -m venv .venv
-# Windows:  .venv\Scripts\activate
-# macOS/Linux:  source .venv/bin/activate
-
-# 2. install
+git clone https://github.com/Subhajeevan/Devvault-.git && cd Devvault-
+python -m venv .venv && .venv\Scripts\activate      # (macOS/Linux: source .venv/bin/activate)
 pip install -r requirements.txt
 
-# 3. add an LLM key (Q&A/summaries/flashcards). Ingestion + search work without it.
-#    Groq is free (no credit card): https://console.groq.com -> API Keys
-cp .env.example .env      # then edit .env: set GROQ_API_KEY (or ANTHROPIC_API_KEY)
-
-# 4. run
-python run.py
-#   or:  uvicorn backend.main:app --reload
+cp .env.example .env      # then set GROQ_API_KEY (free, no card: https://console.groq.com)
+python run.py             # → http://127.0.0.1:8000
 ```
 
-Open **http://127.0.0.1:8000**.
+> Ingestion and semantic search work with **no API key** (embeddings are local). A key
+> only unlocks Q&A, summaries, and flashcards. First run downloads a ~80 MB embedding model once.
 
-> First run downloads Chroma's small embedding model (~80 MB, one time).
+## ☁️ Deploy (free)
 
----
+One `Dockerfile`, deployable on Hugging Face Spaces (recommended, no credit card), Render,
+Fly, Railway, or Cloud Run. **See [DEPLOY.md](DEPLOY.md) for step-by-step instructions.**
+
+```bash
+docker build -t devvault . && docker run -p 7860:7860 -e GROQ_API_KEY=gsk_… devvault
+```
 
 ## 🔌 API
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET`  | `/api/health` | status, model, key presence, source count |
-| `GET`  | `/api/sources` | list sources |
-| `GET`  | `/api/sources/{id}` | source detail (summary, tags) |
-| `DELETE` | `/api/sources/{id}` | remove a source |
-| `POST` | `/api/ingest/pdf` | multipart PDF upload |
-| `POST` | `/api/ingest/youtube` | `{ "url": "…" }` |
-| `POST` | `/api/ingest/web` | `{ "url": "…" }` |
-| `POST` | `/api/ingest/note` | `{ "title": "…", "text": "…" }` |
-| `POST` | `/api/ask` | `{ "question": "…", "source_ids": ["…"]? }` → answer + citations |
-| `POST` | `/api/sources/{id}/flashcards` | `{ "count": 8 }` → flashcards |
-| `POST` | `/api/sources/{id}/resummarize` | regenerate summary + tags |
+| `GET`  | `/api/health` | status, provider, model, source count |
+| `GET` / `DELETE` | `/api/sources[/{id}]` | list / detail / remove sources |
+| `POST` | `/api/ingest/{pdf,youtube,web,note}` | add a source |
+| `POST` | `/api/ask` | `{question, source_ids?}` → answer + citations |
+| `POST` | `/api/sources/{id}/flashcards` | generate flashcards |
 
-Example:
+## 🗺️ Roadmap
 
-```bash
-curl -X POST http://127.0.0.1:8000/api/ask \
-  -H "Content-Type: application/json" \
-  -d '{"question": "How does the retrieval flow use citations?"}'
-```
+- [ ] Streaming answers (SSE) for a live typing effect
+- [ ] Ingest GitHub repos, issues, and Stack Overflow threads
+- [ ] Spaced-repetition scheduling on flashcards
+- [ ] Fully-offline mode with a local LLM (Ollama)
 
----
+## 📄 License
 
-## ⚙️ Configuration
-
-All optional except the key. See `.env.example`.
-
-DevVault supports two LLM backends — pick one:
-
-| Variable | Default | Notes |
-| --- | --- | --- |
-| `DEVVAULT_PROVIDER` | auto | `groq` (free) or `claude`; empty = auto-detect from the key present |
-| `GROQ_API_KEY` | — | **free**, no card: https://console.groq.com |
-| `DEVVAULT_GROQ_MODEL` | `llama-3.3-70b-versatile` | any Groq-hosted model |
-| `ANTHROPIC_API_KEY` | — | Claude; requires purchased credits |
-| `DEVVAULT_MODEL` | `claude-opus-4-8` | Claude model (e.g. `claude-haiku-4-5`) |
-| `DEVVAULT_DATA_DIR` | `./data` | where ChromaDB + SQLite live |
-| `DEVVAULT_TOP_K` | `6` | chunks retrieved per question |
-| `DEVVAULT_CHUNK_SIZE` / `_OVERLAP` | `1200` / `150` | chunking |
-
----
-
-## 🧭 Roadmap ideas
-
-- Streaming answers (SSE) for a live typing effect
-- Ingest GitHub repos / issues and Stack Overflow threads
-- Spaced-repetition scheduling on flashcards
-- Optional fully-offline mode with a local LLM (Ollama)
-
----
-
-Built as a learning + portfolio project. PRs and forks welcome.
+MIT © [Subhajeevan](https://github.com/Subhajeevan) — see [LICENSE](LICENSE).
