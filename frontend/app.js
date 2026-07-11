@@ -139,12 +139,15 @@ async function openDetail(id) {
         ${s.url ? `<a class="cite-src" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a>` : ""}
       </div>
       <div class="detail-actions">
+        <button class="btn primary" id="quiz-btn">🧠 Quiz me</button>
         <button class="btn" id="fc-btn">Flashcards</button>
       </div>
     </div>
     <div class="prose">${s.summary ? md(s.summary) : "<p class='hint'>No summary yet.</p>"}</div>
+    <div id="quiz" class="quiz"></div>
     <div id="cards" class="cards-grid"></div>`;
   d.querySelector("#fc-btn").onclick = () => genFlashcards(id);
+  d.querySelector("#quiz-btn").onclick = () => genQuiz(id);
   d.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -177,6 +180,77 @@ async function genFlashcards(id) {
     btn.disabled = false;
     btn.textContent = "Flashcards";
   }
+}
+
+/* ------------------------------ quiz ------------------------------ */
+async function genQuiz(id) {
+  const btn = $("#quiz-btn");
+  const box = $("#quiz");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Building quiz…`;
+  box.innerHTML = "";
+  try {
+    const { questions } = await api(`/api/sources/${id}/quiz`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ count: 5 }),
+    });
+    if (!questions.length) return toast("Couldn't build a quiz from this source", "err");
+    renderQuiz(box, questions);
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (e) {
+    toast(e.message, "err");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "🧠 Quiz me";
+  }
+}
+
+function renderQuiz(box, questions) {
+  const total = questions.length;
+  let answered = 0, correct = 0;
+  box.innerHTML = `<div class="quiz-head"><span>Quiz</span><span class="quiz-score" id="quiz-score">0 / ${total}</span></div>`;
+  questions.forEach((q, qi) => {
+    const card = document.createElement("div");
+    card.className = "quiz-q";
+    card.innerHTML = `<div class="quiz-qtext">${qi + 1}. ${esc(q.question)}</div>`;
+    const opts = document.createElement("div");
+    opts.className = "quiz-opts";
+    q.options.forEach((opt, oi) => {
+      const b = document.createElement("button");
+      b.className = "quiz-opt";
+      b.textContent = opt;
+      b.onclick = () => {
+        if (card.dataset.done) return;
+        card.dataset.done = "1";
+        answered++;
+        const isCorrect = oi === q.correct_index;
+        if (isCorrect) correct++;
+        [...opts.children].forEach((c, ci) => {
+          c.disabled = true;
+          if (ci === q.correct_index) c.classList.add("correct");
+          else if (ci === oi) c.classList.add("wrong");
+        });
+        const exp = document.createElement("div");
+        exp.className = "quiz-exp " + (isCorrect ? "ok" : "no");
+        exp.innerHTML = `<strong>${isCorrect ? "✓ Correct" : "✗ Not quite"}</strong> — ${esc(q.explanation)}`;
+        card.appendChild(exp);
+        $("#quiz-score").textContent = `${correct} / ${total}`;
+        if (answered === total) {
+          const pct = Math.round((100 * correct) / total);
+          const verdict = pct >= 80 ? "🏆 Nailed it!" : pct >= 50 ? "👍 Not bad" : "📚 Keep studying";
+          const done = document.createElement("div");
+          done.className = "quiz-done";
+          done.innerHTML = `${verdict} &nbsp; You scored <strong>${correct}/${total}</strong> (${pct}%).`;
+          box.appendChild(done);
+          done.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);
+    box.appendChild(card);
+  });
 }
 
 /* ------------------------------ ask ------------------------------ */

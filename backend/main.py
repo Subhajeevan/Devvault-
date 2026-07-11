@@ -161,6 +161,20 @@ def flashcards(source_id: str, body: FlashcardsIn) -> dict:
     return {"flashcards": cards}
 
 
+@app.post("/api/sources/{source_id}/quiz")
+def quiz(source_id: str, body: FlashcardsIn) -> dict:
+    source = db.get_source(source_id, include_content=True)
+    if not source:
+        raise HTTPException(404, "Source not found.")
+    try:
+        questions = llm.make_quiz(source["content"], source["title"], body.count)
+    except llm.LLMNotConfigured as exc:
+        raise HTTPException(400, str(exc))
+    except Exception as exc:
+        raise HTTPException(502, f"Model call failed: {exc}")
+    return {"questions": questions}
+
+
 @app.post("/api/sources/{source_id}/resummarize")
 def resummarize(source_id: str) -> dict:
     source = db.get_source(source_id, include_content=True)

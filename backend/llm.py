@@ -347,6 +347,61 @@ def make_flashcards(text: str, title: str, count: int = 8) -> list[dict]:
     return cards
 
 
+_QUIZ_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "questions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "question": {"type": "string"},
+                    "options": {"type": "array", "items": {"type": "string"}},
+                    "correct_index": {"type": "integer"},
+                    "explanation": {"type": "string"},
+                },
+                "required": ["question", "options", "correct_index", "explanation"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["questions"],
+    "additionalProperties": False,
+}
+
+
+def make_quiz(text: str, title: str, count: int = 5) -> list[dict]:
+    """Generate multiple-choice questions (4 options, one correct) from a source."""
+    _require()
+    system = (
+        "You are DevVault's quizmaster. You write rigorous multiple-choice questions "
+        "that test real understanding of technical material — not trivia. Exactly one "
+        "option is correct; distractors are plausible but wrong on close reading."
+    )
+    prompt = (
+        f"Write {count} multiple-choice questions from the document titled \"{title}\". "
+        "Each question has exactly 4 options, exactly one correct. Give the 0-based "
+        "`correct_index` and a one-sentence `explanation` of why it is right.\n\n"
+        f"<document>\n{text[: settings.FLASHCARD_CHARS]}\n</document>"
+    )
+    data = _json_chat(system, prompt, _QUIZ_SCHEMA, max_tokens=4096)
+    out = []
+    for q in data.get("questions", []):
+        opts = [str(o).strip() for o in q.get("options", []) if str(o).strip()]
+        ci = q.get("correct_index", 0)
+        question = str(q.get("question", "")).strip()
+        if question and len(opts) >= 2 and isinstance(ci, int) and 0 <= ci < len(opts):
+            out.append(
+                {
+                    "question": question,
+                    "options": opts,
+                    "correct_index": ci,
+                    "explanation": str(q.get("explanation", "")).strip(),
+                }
+            )
+    return out
+
+
 def answer_question(question: str, retrieved: list[dict]) -> dict:
     if not retrieved:
         return {
