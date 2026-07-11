@@ -69,15 +69,20 @@ def load_youtube(url: str) -> tuple[str, str]:
     if not video_id:
         raise ValueError("Could not parse a YouTube video ID from that URL.")
 
+    api = YouTubeTranscriptApi()  # instance-based API (youtube-transcript-api >= 1.x)
     try:
-        data = YouTubeTranscriptApi.get_transcript(
-            video_id, languages=["en", "en-US", "en-GB"]
+        try:
+            fetched = api.fetch(video_id, languages=["en", "en-US", "en-GB"])
+        except Exception:
+            # Fall back to the first available transcript (any language / auto-generated).
+            fetched = next(iter(api.list(video_id))).fetch()
+    except Exception as e:
+        raise ValueError(
+            "Couldn't get a transcript — the video may have captions disabled, or "
+            f"YouTube is blocking automated access from this host ({type(e).__name__})."
         )
-    except Exception:
-        # Fall back to whatever transcript is available (auto-generated / other lang).
-        data = YouTubeTranscriptApi.get_transcript(video_id)
 
-    text = " ".join(seg["text"].strip() for seg in data if seg.get("text"))
+    text = " ".join(s.text.strip() for s in fetched if getattr(s, "text", "").strip())
     text = re.sub(r"\s+", " ", text).strip()
     if not text:
         raise ValueError("No transcript text was found for this video.")

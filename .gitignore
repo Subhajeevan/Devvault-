@@ -16,3 +16,6 @@ env/
 .DS_Store
 .idea/
 .vscode/
+
+# Personal prep (keep out of the public repo)
+INTERVIEW_PREP.*

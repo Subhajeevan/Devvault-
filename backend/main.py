@@ -32,7 +32,11 @@ app = FastAPI(title="DevVault", version="0.1.0", lifespan=lifespan)
 def _ingest(title: str, source_type: str, url: str | None, text: str) -> dict:
     text = (text or "").strip()
     if not text:
-        raise HTTPException(400, "No extractable text was found in this source.")
+        raise HTTPException(
+            400,
+            "No extractable text was found. If this is a scanned or image-only PDF, "
+            "it has no selectable text to index (OCR isn't supported yet).",
+        )
 
     chunks = chunk_text(text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
     if not chunks:
