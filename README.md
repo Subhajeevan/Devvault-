@@ -4,6 +4,7 @@
 
 ### A developer's AI second brain — ingest your docs, talks, and notes, then ask questions and get answers **grounded in your own sources, with citations.**
 
+[![Live Demo](https://img.shields.io/badge/🔗_Live_Demo-online-35e0a1?style=flat-square)](https://devvault-cpf6.onrender.com)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-vector%20search-FF6B6B?style=flat-square)](https://www.trychroma.com/)
@@ -14,7 +15,9 @@
 
 **Retrieval-Augmented Generation · Local vector DB · Grounded citations · Zero-cost to run**
 
-🔗 **Live demo:** _deploying — [one-click deploy below](#️-deploy-free)_
+### 🔗 Live demo → **[devvault-cpf6.onrender.com](https://devvault-cpf6.onrender.com)**
+
+<sub>Hosted free on Render — the first request after idle may take ~30–60s to wake, and the demo vault resets periodically.</sub>
 
 [Features](#-features) · [Demo](#️-demo) · [Architecture](#️-architecture) · [Quickstart](#-quickstart) · [Deploy](#️-deploy-free)
 
