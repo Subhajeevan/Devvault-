@@ -185,6 +185,7 @@ textarea { font-size: 14px; }
 .source-del { margin-left: auto; background: none; border: 0; color: var(--faint); cursor: pointer; font-size: 16px; opacity: 0; transition: 0.18s; }
 .source:hover .source-del { opacity: 1; }
 .source-del:hover { color: var(--danger); }
+.source-sample { margin-left: auto; font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--faint); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; flex-shrink: 0; }
 .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
 .tag { font-family: var(--mono); font-size: 10.5px; color: var(--muted); background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; }
 

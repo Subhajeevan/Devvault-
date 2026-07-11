@@ -1,11 +1,17 @@
-"""DevVault FastAPI application: ingestion, retrieval, Q&A, summaries, flashcards."""
+"""DevVault FastAPI app: ingestion, retrieval, Q&A, summaries, flashcards, quiz.
+
+Sources are scoped to an owner — an anonymous per-device id sent in the
+`X-Vault-Id` header — so files ingested on one device are private and not shown
+to others. Seeded sample sources use owner "public" and are visible to everyone.
+"""
 from __future__ import annotations
 
+import re
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -27,10 +33,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="DevVault", version="0.1.0", lifespan=lifespan)
 
 
+def vault_id(x_vault_id: str | None = Header(default=None)) -> str:
+    """Per-device privacy scope. Falls back to the shared 'public' vault."""
+    v = (x_vault_id or "public").strip()
+    return v if re.fullmatch(r"[A-Za-z0-9_-]{1,64}", v) else "public"
+
+
 # --------------------------------------------------------------------------- #
-# Ingestion helpers
+# Ingestion helper
 # --------------------------------------------------------------------------- #
-def _ingest(title: str, source_type: str, url: str | None, text: str) -> dict:
+def _ingest(owner: str, title: str, source_type: str, url: str | None, text: str) -> dict:
     text = (text or "").strip()
     if not text:
         raise HTTPException(
@@ -38,7 +50,6 @@ def _ingest(title: str, source_type: str, url: str | None, text: str) -> dict:
             "No extractable text was found. If this is a scanned or image-only PDF, "
             "it has no selectable text to index (OCR isn't supported yet).",
         )
-
     chunks = chunk_text(text, settings.CHUNK_SIZE, settings.CHUNK_OVERLAP)
     if not chunks:
         raise HTTPException(400, "This source produced no indexable content.")
@@ -46,18 +57,18 @@ def _ingest(title: str, source_type: str, url: str | None, text: str) -> dict:
     source_id = uuid.uuid4().hex[:12]
     vectorstore.add_chunks(source_id, title, source_type, url, chunks)
 
-    # Analysis (summary + tags) is best-effort: retrieval still works without a key.
     summary, tags = "", []
     try:
         analysis = llm.analyze_document(text, title)
         summary, tags = analysis["summary"], analysis["tags"]
     except llm.LLMNotConfigured:
-        summary = "_Add an ANTHROPIC_API_KEY to auto-generate a summary._"
-    except Exception as exc:  # don't let a model hiccup lose the ingested source
+        summary = "_Add an LLM key to auto-generate a summary._"
+    except Exception as exc:
         summary = f"_Summary unavailable: {exc}_"
 
     return db.add_source(
         id=source_id,
+        owner=owner,
         title=title,
         source_type=source_type,
         url=url,
@@ -69,7 +80,7 @@ def _ingest(title: str, source_type: str, url: str | None, text: str) -> dict:
 
 
 # --------------------------------------------------------------------------- #
-# API — health & sources
+# Health & sources
 # --------------------------------------------------------------------------- #
 @app.get("/api/health")
 def health() -> dict:
@@ -83,32 +94,31 @@ def health() -> dict:
 
 
 @app.get("/api/sources")
-def list_sources() -> dict:
-    return {"sources": db.list_sources()}
+def list_sources(owner: str = Depends(vault_id)) -> dict:
+    return {"sources": db.list_sources(owner)}
 
 
 @app.get("/api/sources/{source_id}")
-def get_source(source_id: str) -> dict:
-    source = db.get_source(source_id)
+def get_source(source_id: str, owner: str = Depends(vault_id)) -> dict:
+    source = db.get_source(source_id, owner)
     if not source:
         raise HTTPException(404, "Source not found.")
     return source
 
 
 @app.delete("/api/sources/{source_id}")
-def delete_source(source_id: str) -> dict:
-    if not db.get_source(source_id):
-        raise HTTPException(404, "Source not found.")
+def delete_source(source_id: str, owner: str = Depends(vault_id)) -> dict:
+    if not db.delete_source(source_id, owner):
+        raise HTTPException(404, "Source not found, or it's a shared sample you can't delete.")
     vectorstore.delete_source(source_id)
-    db.delete_source(source_id)
     return {"deleted": source_id}
 
 
 # --------------------------------------------------------------------------- #
-# API — ingestion
+# Ingestion
 # --------------------------------------------------------------------------- #
 @app.post("/api/ingest/pdf")
-async def ingest_pdf(file: UploadFile = File(...)) -> dict:
+async def ingest_pdf(file: UploadFile = File(...), owner: str = Depends(vault_id)) -> dict:
     data = await file.read()
     if not data:
         raise HTTPException(400, "Empty file.")
@@ -117,29 +127,34 @@ async def ingest_pdf(file: UploadFile = File(...)) -> dict:
     except Exception as exc:
         raise HTTPException(400, f"Failed to read PDF: {exc}")
     title = (file.filename or "Untitled PDF").rsplit(".", 1)[0]
-    return _ingest(title, "pdf", None, text)
+    return _ingest(owner, title, "pdf", None, text)
 
 
 @app.post("/api/ingest/web")
-def ingest_web(body: UrlIn) -> dict:
+def ingest_web(body: UrlIn, owner: str = Depends(vault_id)) -> dict:
     try:
         title, text = ingest.load_web(body.url)
     except Exception as exc:
         raise HTTPException(400, f"Failed to load page: {exc}")
-    return _ingest(title, "web", body.url, text)
+    return _ingest(owner, title, "web", body.url, text)
 
 
 @app.post("/api/ingest/note")
-def ingest_note(body: NoteIn) -> dict:
-    return _ingest(body.title.strip(), "note", None, body.text)
+def ingest_note(body: NoteIn, owner: str = Depends(vault_id)) -> dict:
+    return _ingest(owner, body.title.strip(), "note", None, body.text)
 
 
 # --------------------------------------------------------------------------- #
-# API — Q&A and study tools
+# Q&A and study tools
 # --------------------------------------------------------------------------- #
 @app.post("/api/ask")
-def ask(body: AskIn) -> dict:
-    retrieved = vectorstore.query(body.question, settings.TOP_K, body.source_ids)
+def ask(body: AskIn, owner: str = Depends(vault_id)) -> dict:
+    allowed = set(db.list_source_ids(owner))
+    if body.source_ids:
+        ids = [i for i in body.source_ids if i in allowed]
+    else:
+        ids = list(allowed)
+    retrieved = vectorstore.query(body.question, settings.TOP_K, ids) if ids else []
     try:
         return llm.answer_question(body.question, retrieved)
     except llm.LLMNotConfigured as exc:
@@ -149,8 +164,8 @@ def ask(body: AskIn) -> dict:
 
 
 @app.post("/api/sources/{source_id}/flashcards")
-def flashcards(source_id: str, body: FlashcardsIn) -> dict:
-    source = db.get_source(source_id, include_content=True)
+def flashcards(source_id: str, body: FlashcardsIn, owner: str = Depends(vault_id)) -> dict:
+    source = db.get_source(source_id, owner, include_content=True)
     if not source:
         raise HTTPException(404, "Source not found.")
     try:
@@ -163,8 +178,8 @@ def flashcards(source_id: str, body: FlashcardsIn) -> dict:
 
 
 @app.post("/api/sources/{source_id}/quiz")
-def quiz(source_id: str, body: FlashcardsIn) -> dict:
-    source = db.get_source(source_id, include_content=True)
+def quiz(source_id: str, body: FlashcardsIn, owner: str = Depends(vault_id)) -> dict:
+    source = db.get_source(source_id, owner, include_content=True)
     if not source:
         raise HTTPException(404, "Source not found.")
     try:
@@ -177,8 +192,8 @@ def quiz(source_id: str, body: FlashcardsIn) -> dict:
 
 
 @app.post("/api/sources/{source_id}/resummarize")
-def resummarize(source_id: str) -> dict:
-    source = db.get_source(source_id, include_content=True)
+def resummarize(source_id: str, owner: str = Depends(vault_id)) -> dict:
+    source = db.get_source(source_id, owner, include_content=True)
     if not source:
         raise HTTPException(404, "Source not found.")
     try:
@@ -188,7 +203,7 @@ def resummarize(source_id: str) -> dict:
     except Exception as exc:
         raise HTTPException(502, f"Model call failed: {exc}")
     db.update_analysis(source_id, analysis["summary"], analysis["tags"])
-    return db.get_source(source_id)
+    return db.get_source(source_id, owner)
 
 
 # --------------------------------------------------------------------------- #

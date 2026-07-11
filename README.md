@@ -46,6 +46,7 @@ apps — **RAG, vector databases, and LLM orchestration.**
 | 🎴 | **Flashcards** | Turn any source into Q&A cards for active recall |
 | 🧠 | **Quiz Me** | Auto-generate an interactive, auto-graded multiple-choice quiz from any source |
 | 🎯 | **Scoped search** | Query everything, or narrow to a single source |
+| 🔒 | **Private vaults** | Each device gets its own vault — your files aren't shown to other visitors |
 | 🆓 | **Local-first & free** | Embeddings run on-device; Groq powers the LLM at no cost |
 
 ## 🖼️ Demo

@@ -89,6 +89,7 @@ def _ingest_sample(sample: dict) -> None:
 
     db.add_source(
         id=source_id,
+        owner=db.PUBLIC,
         title=sample["title"],
         source_type="note",
         url=None,
@@ -101,7 +102,7 @@ def _ingest_sample(sample: dict) -> None:
 
 def _run() -> None:
     try:
-        if db.count_sources() > 0:
+        if db.count_sources(owner=db.PUBLIC) > 0:
             return
         for sample in _SAMPLES:
             try:

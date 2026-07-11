@@ -3,8 +3,20 @@
 const $ = (sel) => document.querySelector(sel);
 const state = { sources: [], scopeId: null, scopeTitle: null };
 
+/* Anonymous per-device vault id → your sources stay private to this browser. */
+function vaultId() {
+  let id = localStorage.getItem("devvault_sid");
+  if (!id) {
+    id = (crypto.randomUUID && crypto.randomUUID()) ||
+      "d-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem("devvault_sid", id);
+  }
+  return id;
+}
+
 /* ------------------------------ helpers ------------------------------ */
 async function api(path, opts = {}) {
+  opts.headers = { "X-Vault-Id": vaultId(), ...(opts.headers || {}) };
   const res = await fetch(path, opts);
   let data = null;
   try { data = await res.json(); } catch { /* no body */ }
@@ -85,14 +97,16 @@ async function loadSources() {
       <div class="source-top">
         <span class="badge ${s.source_type}">${s.source_type}</span>
         <span class="source-title" title="${esc(s.title)}">${esc(s.title)}</span>
-        <button class="source-del" title="Delete">&times;</button>
+        ${s.owned ? `<button class="source-del" title="Delete">&times;</button>`
+                  : `<span class="source-sample" title="Shared sample">sample</span>`}
       </div>
       ${s.tags && s.tags.length
         ? `<div class="tags">${s.tags.map((t) => `<span class="tag">#${esc(t)}</span>`).join("")}</div>`
         : ""}`;
     el.querySelector(".source-title").onclick = () => openDetail(s.id);
     el.querySelector(".badge").onclick = () => openDetail(s.id);
-    el.querySelector(".source-del").onclick = (e) => { e.stopPropagation(); delSource(s.id); };
+    const del = el.querySelector(".source-del");
+    if (del) del.onclick = (e) => { e.stopPropagation(); delSource(s.id); };
     wrap.appendChild(el);
   }
 }
