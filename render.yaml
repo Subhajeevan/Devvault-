@@ -1,0 +1,16 @@
+# Render Blueprint — one-click deploy of DevVault.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: devvault
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DEVVAULT_PROVIDER
+        value: groq
+      # Set this in the Render dashboard (sync:false keeps the secret out of git).
+      - key: GROQ_API_KEY
+        sync: false

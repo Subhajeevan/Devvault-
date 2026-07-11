@@ -14,7 +14,9 @@
 
 **Retrieval-Augmented Generation · Local vector DB · Grounded citations · Zero-cost to run**
 
-[Features](#-features) · [Demo](#️-demo) · [Architecture](#️-architecture) · [Quickstart](#-quickstart) · [Deploy](DEPLOY.md)
+🔗 **Live demo:** _deploying — [one-click deploy below](#️-deploy-free)_
+
+[Features](#-features) · [Demo](#️-demo) · [Architecture](#️-architecture) · [Quickstart](#-quickstart) · [Deploy](#️-deploy-free)
 
 </div>
 
@@ -94,8 +96,13 @@ python run.py             # → http://127.0.0.1:8000
 
 ## ☁️ Deploy (free)
 
-One `Dockerfile`, deployable on Hugging Face Spaces (recommended, no credit card), Render,
-Fly, Railway, or Cloud Run. **See [DEPLOY.md](DEPLOY.md) for step-by-step instructions.**
+One `Dockerfile`, deployable on Render, Hugging Face Spaces, Fly, Railway, or Cloud Run.
+A [`render.yaml`](render.yaml) blueprint makes Render one-click:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Subhajeevan/Devvault-)
+
+Then set `GROQ_API_KEY` in the Render dashboard. **See [DEPLOY.md](DEPLOY.md)** for the full
+walkthrough and other hosts. Run it locally with Docker:
 
 ```bash
 docker build -t devvault . && docker run -p 7860:7860 -e GROQ_API_KEY=gsk_… devvault
